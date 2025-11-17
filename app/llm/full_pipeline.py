@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 from parser import parse_script
-from main_natasha_filter import analyze_parsed_script  
+from main_natasha_filter import analyze_parsed_script
 from predict_new import load_model_and_tokenizer
 from rag_law import generate_recommendations, calculate_simple_rating  # без RuT5!
 
@@ -14,7 +14,7 @@ import torch
 
 # ----------------- CONFIG -----------------
 INPUT_SCRIPT = ".docx"
-OUTPUT_ALL = "all_suspicious.json"        # Все подозрительные
+OUTPUT_ALL = ".json"        # Все подозрительные
 OUTPUT_MAX = "max_rating_scenes.json"     # Только максимум
 RUBERT_MODEL_DIR = "trained_model"
 MAX_LEN = 256
@@ -37,7 +37,7 @@ def run_pipeline(input_path: str, output_all: str, output_max: str,
 
     print("3) Загружаем RuBERT модель...")
     model, tokenizer, id_to_category, level_shift = load_model_and_tokenizer(rubert_model_dir)
-    
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.eval()
@@ -90,7 +90,7 @@ def run_pipeline(input_path: str, output_all: str, output_max: str,
                     predicted_category = id_to_category.get(str(cat_pred_id)) or \
                                        id_to_category.get(cat_pred_id) or \
                                        id_to_category.get(f"cat_{cat_pred_id}", "unknown")
-                
+
                 predicted_level = int(lev_pred_id + int(level_shift))
 
             # Определяем рейтинг
@@ -135,7 +135,7 @@ def run_pipeline(input_path: str, output_all: str, output_max: str,
                 "category_scores": cat_scores,
                 "рекомендации_понижения": recommendations
             }
-            
+
             all_suspicious_data.append(scene_data)
 
     # Если нет подозрительных — выходим
@@ -162,7 +162,7 @@ def run_pipeline(input_path: str, output_all: str, output_max: str,
     # === ФАЙЛ 2: Только сцены с МАКСИМАЛЬНЫМ рейтингом ===
     max_rating_index = max(item["индекс_рейтинга"] for item in all_suspicious_data)
     max_rating_scenes = [
-        item for item in all_suspicious_data 
+        item for item in all_suspicious_data
         if item["индекс_рейтинга"] == max_rating_index
     ]
 
@@ -184,6 +184,7 @@ def run_pipeline(input_path: str, output_all: str, output_max: str,
 
     dt = time.time() - t0
     print(f"Готово. Общее время: {dt:.1f} сек.")
+    return {"result": out_max}
 
 
 def process_script(
